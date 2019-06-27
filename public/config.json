@@ -1,7 +1,7 @@
 {
     "server_details": {
         "port": 9445,
-        "log_enable": false,
+        "log_enable": true,
         "log_level": "debug"
     }
 }
