@@ -16,7 +16,7 @@ var geoQuery;
 
 
 var db = firebase.database();
-var DriverLocationController = function () {
+var DriverLocationController = function() {
     this.storeLocationDetails_firebase = (body) => {
         return new Promise((resolve, reject) => {
             logger.generateLog().then(log => {
@@ -62,14 +62,13 @@ var DriverLocationController = function () {
 
                     var driversRef = db.ref("drivers/");
                     var final_result = [];
-                    driversRef.on("value", function (snapshot) {
+                    driversRef.on("value", function(snapshot) {
                         let object_container = Object.entries(JSON.parse(JSON.stringify(snapshot.val())));
 
                         object_container.forEach(element => {
                             if (element[1] != null) {
 
-                                geofire.set(element[1].driverId, [parseFloat(element[1].longitude), parseFloat(element[1].latitude)]).then(function () {
-                                }, function (error) {
+                                geofire.set(element[1].driverId, [parseFloat(element[1].latitude), parseFloat(element[1].longitude)]).then(function() {}, function(error) {
                                     console.log("Error: " + error);
                                 });
 
@@ -84,9 +83,20 @@ var DriverLocationController = function () {
                             radius: 10
                         });
 
+                        geoQuery.on("key_entered", (key, location, distance) => {
+                            console.log("ENTERED: " + key);
+                            //this.fishPondKeys.push(key);
+                        });
+
+                        geoQuery.on("key_exited", (key, location, distance) => {
+                            //let removeIndex = this.fishPondKeys.findIndex(x => x == key);
+                            console.log("EXITED: " + key);
+                            //this.fishPondKeys.splice(removeIndex,1);
+                        });
+
 
                         resolve();
-                    }, function (errorObject) {
+                    }, function(errorObject) {
                         loggerFile.error("The read failed: " + errorObject.code);
                         reject(err);
                     });
@@ -110,7 +120,7 @@ function writeUserData(cur_driverId, cur_longitude, lcur_latitude, cur_bookingId
                 bookingId: cur_bookingId,
                 driverId: cur_driverId,
                 last_updated: updatedTimestamp
-            }, function (error) {
+            }, function(error) {
                 if (error) {
                     reject(error)
                 } else {
