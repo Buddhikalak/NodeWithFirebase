@@ -2,10 +2,18 @@ var logger = require('../Controller/LogController');
 var admin = require("firebase-admin");
 var serviceAccount = require("../serviceAccountKey.json");
 var firebase = require("firebase-admin");
+var gfire = require("geofire");
+
 var app = admin.initializeApp({
     credential: admin.credential.cert(serviceAccount),
     databaseURL: "https://muve-driver-location-service.firebaseio.com"
 });
+
+var firebaseRef = firebase.database().ref("drivers/").push();
+var geofire = new gfire.GeoFire(firebaseRef);
+var geoQuery;
+
+
 
 var db = firebase.database();
 var DriverLocationController = function () {
@@ -48,7 +56,41 @@ var DriverLocationController = function () {
             logger.generateLog().then(log => {
                 let loggerFile = log.getLogger('locationService');
                 try {
-                    resolve();
+                    var gfire = require("geofire");
+                    var firebaseRef = firebase.database().ref("/gajamatics");
+                    var geofire = new gfire.GeoFire(firebaseRef);
+
+                    var driversRef = db.ref("drivers/");
+                    var final_result = [];
+                    driversRef.on("value", function (snapshot) {
+                        let object_container = Object.entries(JSON.parse(JSON.stringify(snapshot.val())));
+
+                        object_container.forEach(element => {
+                            if (element[1] != null) {
+
+                                geofire.set(element[1].driverId, [parseFloat(element[1].longitude), parseFloat(element[1].latitude)]).then(function () {
+                                }, function (error) {
+                                    console.log("Error: " + error);
+                                });
+
+
+
+                            }
+                        });
+
+                        //1 latitude 2 longitude
+                        geoQuery = geofire.query({
+                            center: [6.9218124, 79.86556088],
+                            radius: 10
+                        });
+
+
+                        resolve();
+                    }, function (errorObject) {
+                        loggerFile.error("The read failed: " + errorObject.code);
+                        reject(err);
+                    });
+
                 } catch (err) {
                     loggerFile.error(err);
                     reject(err);
@@ -62,7 +104,7 @@ function writeUserData(cur_driverId, cur_longitude, lcur_latitude, cur_bookingId
     return new Promise((resolve, reject) => {
         logger.generateLog().then(log => {
             let loggerFile = log.getLogger('locationService');
-            db.ref('drivers/').push({
+            db.ref('drivers/' + cur_driverId).set({
                 longitude: cur_longitude,
                 latitude: lcur_latitude,
                 bookingId: cur_bookingId,
