@@ -21,7 +21,7 @@ router.post('/driver/location', function (req, res) {
             let logger = log.getLogger('locationService');
             var serverDetailsJSON = JSON.parse(hostInfo);
             if (serverDetailsJSON.server_details['log_enable'] == true) {
-                logger.info(`routes /driver/location`);
+                logger.info(`routes POST: /driver/location`);
             }
 
             let driverLocationDetails = JSON.parse(JSON.stringify(req.body));
@@ -38,4 +38,30 @@ router.post('/driver/location', function (req, res) {
         })
     })
 })
+
+router.get('/driver/location', function (req, res) {
+    configService.getHostDetails().then(hostInfo => {
+        logger.generateLog().then(log => {
+            let logger = log.getLogger('locationService');
+            var serverDetailsJSON = JSON.parse(hostInfo);
+            let radious = serverDetailsJSON.location_details['radious'];
+            let field = serverDetailsJSON.location_details['field'];
+            let locationDetails = JSON.parse(JSON.stringify(req.body));
+            if (serverDetailsJSON.server_details['log_enable'] == true) {
+                logger.info(`routes GET: /driver/location`);
+                logger.info(`location_details:radious-` + radious);
+                logger.info(`location_details:field-` + field);
+            }
+              driverLocationControler.getNearestDrivers(locationDetails).then(data=>{
+                 res.status(200).send({ message: "returned data" });
+             }).catch(error => {
+                 logger.info(error);
+                 res.status(500).send({ message: "Error:- " + error });
+             }) 
+        })
+    })
+})
+
+
+
 module.exports = router;

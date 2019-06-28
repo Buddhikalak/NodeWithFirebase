@@ -15,7 +15,9 @@
     "body-parser": "^1.19.0",
     "cors": "^2.8.5",
     "express": "^4.17.1",
+    "firebase": "^6.2.4",
     "firebase-admin": "^8.2.0",
+    "geofire": "^5.0.1",
     "log4js": "^4.4.0"
   },
   "devDependencies": {

@@ -6,8 +6,8 @@ var app = admin.initializeApp({
     credential: admin.credential.cert(serviceAccount),
     databaseURL: "https://muve-driver-location-service.firebaseio.com"
 });
+
 var db = firebase.database();
-var ref = db.ref("restricted_access/secret_document");
 var DriverLocationController = function () {
     this.storeLocationDetails_firebase = (body) => {
         return new Promise((resolve, reject) => {
@@ -19,15 +19,16 @@ var DriverLocationController = function () {
                     var longitude = body.location_details.longitude;
                     var latitude = body.location_details.latitude;
                     var bookingid = body.location_details.bookingid;
-                    var response = writeUserData(driverid, longitude, latitude, bookingid);
+                    var updatedTimestamp = Date.now();
+                    var response = writeUserData(driverid, longitude, latitude, bookingid, updatedTimestamp);
                     if (response) {
 
                         var resObj = {
                             Longitude: longitude,
-                            Latitude: latitude, 
-                            Bookingid: bookingid ,
-                            Driverid:driverid
-                        }; 
+                            Latitude: latitude,
+                            Bookingid: bookingid,
+                            Driverid: driverid
+                        };
                         loggerFile.info(JSON.stringify(resObj));
                         resolve()
                     } else {
@@ -42,18 +43,31 @@ var DriverLocationController = function () {
 
         })
     }
+    this.getNearestDrivers = (body) => {
+        return new Promise((resolve, reject) => {
+            logger.generateLog().then(log => {
+                let loggerFile = log.getLogger('locationService');
+                try {
+                    resolve();
+                } catch (err) {
+                    loggerFile.error(err);
+                    reject(err);
+                }
+            })
+        })
+    }
 }
 
-function writeUserData(cur_driverId, cur_longitude, lcur_latitude, cur_bookingId) {
+function writeUserData(cur_driverId, cur_longitude, lcur_latitude, cur_bookingId, updatedTimestamp) {
     return new Promise((resolve, reject) => {
         logger.generateLog().then(log => {
             let loggerFile = log.getLogger('locationService');
-
-            db.ref('drivers/locations' + cur_driverId).set({
+            db.ref('drivers/').push({
                 longitude: cur_longitude,
                 latitude: lcur_latitude,
                 bookingId: cur_bookingId,
-                driverId: cur_driverId
+                driverId: cur_driverId,
+                last_updated: updatedTimestamp
             }, function (error) {
                 if (error) {
                     reject(error)
@@ -64,4 +78,8 @@ function writeUserData(cur_driverId, cur_longitude, lcur_latitude, cur_bookingId
         })
     })
 }
+
+
+
+
 module.exports = new DriverLocationController();
